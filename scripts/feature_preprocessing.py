@@ -8,16 +8,13 @@ def featuring(features):
     for x in temp_feat:
         np.place(x, x == -999, np.nan)
         
+
+
     stacked_feat = np.hstack([temp_feat] 
                              + [np.power(temp_feat,2)] 
                              + [np.absolute(temp_feat)**0.5]
                              + [np.arctan(temp_feat)]
                              + [add_pairwise_products(temp_feat)])
-    inplace_map(np.nan_to_num, stacked_feat)
-    return stacked_feat
-
-    # add rows with squares et roots
-    stacked_feat = np.hstack([temp_feat] + [np.power(temp_feat,2)] + [np.absolute(temp_feat)**0.5])
     inplace_map(np.nan_to_num, stacked_feat)
     return stacked_feat
     
