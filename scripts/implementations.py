@@ -85,13 +85,13 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
     return w,loss
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
     # init parameters
     threshold = 1e-8
     losses = []
 
     # build tx
-    tx = x
+    tx = tx
     w = initial_w
 
     # start the logistic regression
