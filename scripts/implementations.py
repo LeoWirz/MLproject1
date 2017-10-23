@@ -50,40 +50,12 @@ def ridge_regression(y, tx, lambda_):
     loss = calculate_mse(y, tx, w)
     return w, loss
 
-def logistic_regression(y, tx, initial_w, max_iters, gamma):
-    # init parameters
-    threshold = 1e-8
-    losses = []
-
-    w = initial_w
-
-    # start the logistic regression
-    for iter in range(max_iters):
-        # compute the y estimate and map them to the probability range (0,1)
-        # here we use this weird form to avoid memory/numerical issues
-        y_est = tx.dot(w)
-        sigmoid = np.exp(-np.logaddexp(0, -y_est))
-
-        # compute the loss (the weird for is just to avoid memory issues)
-        loss = y*np.log(sigmoid+1e-1)+(1-y)*(np.log(1-sigmoid+0.1))
-        loss = -np.sum(loss)
-
-        # compute the gradient using the sigmoid function
-        grad = tx.T.dot(sigmoid-y)
-
-        # update the weights
-        w = w - gamma * grad
-        
-        # log info
-        if iter % 10 == 0:
-            print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
-
-        # converge criteria
-        losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
-            break
-    
-    return w,loss
+def logistic_regression(y, tx, w):
+    """return the loss, gradient, and hessian."""
+    loss = calculate_loss(y, tx, w)
+    gradient = calculate_gradient(y, tx, w)
+    hessian = calculate_hessian(y, tx, w)
+    return loss, gradient, hessian
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
     # init parameters
@@ -106,11 +78,8 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     # visualization
-    print("The loss={l}".format(l=penalized_loss(y, tx, w)))
-    return losses[-1], w
-
-    return w, loss
-
+    print("The loss={l}".format(l=penalized_loss(y, tx, w, lambda_)))
+    return w, losses[-1]
 
 
 
@@ -184,11 +153,50 @@ def penalized_loss(y, tx, w, lambda_):
     return calculate_loss(y, tx, w) + lambda_ * w.T.dot(w)
 
 def penalized_logistic_regression(y, tx, w, lambda_):
-    loss = penalized_loss(y, tx, w, lambda_)
-    grad = calculate_gradient(y, tx, w) + lambda_ * 2 * w
-    return loss, grad
+    """return the loss and gradient."""
+    num_samples = y.shape[0]
+    loss = calculate_loss(y, tx, w) + lambda_ * np.squeeze(w.T.dot(w))
+    gradient = calculate_gradient(y, tx, w) + 2 * lambda_ * w
+    return loss, gradient
 
 def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
-    loss, grad = penalized_logistic_regression(y, tx, w, lambda_)
-    w = w - gamma*grad
+    """
+    Do one step of gradient descent, using the penalized logistic regression.
+    Return the loss and updated w.
+    """
+    loss, gradient = penalized_logistic_regression(y, tx, w, lambda_)
+    w -= gamma * gradient
     return loss, w
+
+def sigmoid(t):
+    """apply sigmoid function on t."""
+    return 1.0 / (1 + np.exp(-t))
+
+def calculate_loss(y, tx, w):
+    """compute the cost by negative log likelihood."""
+    pred = sigmoid(tx.dot(w))
+    loss = y.T.dot(np.log(pred)) + (1 - y).T.dot(np.log(1 - pred))
+    return np.squeeze(- loss)
+
+def calculate_gradient(y, tx, w):
+    """compute the gradient of loss."""
+    pred = sigmoid(tx.dot(w))
+    grad = tx.T.dot(pred - y)
+    return grad
+
+def learning_by_gradient_descent(y, tx, w, gamma):
+    """
+    Do one step of gradient descen using logistic regression.
+    Return the loss and the updated w.
+    """
+    loss = calculate_loss(y, tx, w)
+    grad = calculate_gradient(y, tx, w)
+    w -= gamma * grad
+    return loss, w
+
+def calculate_hessian(y, tx, w):
+    """return the hessian of the loss function."""
+    pred = sigmoid(tx.dot(w))
+    pred = np.diag(pred.T[0])
+    r = np.multiply(pred, (1-pred))
+    return tx.T.dot(r).dot(tx)
