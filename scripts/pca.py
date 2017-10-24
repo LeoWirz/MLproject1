@@ -27,6 +27,8 @@ def PCA(dataset, num_output_features):
     eig_pairs.sort(key=lambda x: x[0], reverse=True)
 
     # eigen vectors matrix with number of final feature needed  
+    if num_output_features < 1:
+        num_output_features = int(np.round(num_output_features * num_features))
     matrix_w = np.hstack([[eig_pairs[i][1] for i in range(num_output_features)]])
     
     transformed = dataset.dot(matrix_w.T)

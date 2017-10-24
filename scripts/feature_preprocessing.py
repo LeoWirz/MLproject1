@@ -1,3 +1,6 @@
+import numpy as np
+from implementations import *
+
 def featuring(features):
     # replace -999 by nan
     temp_feat = np.copy(features)
@@ -15,7 +18,9 @@ def featuring(features):
                              + [np.absolute(temp_feat)**0.5]
                              + [np.arctan(temp_feat)]
                              + [add_pairwise_products(temp_feat)]
-                             + [np.log(np.absolute(temp_feat) + 1)])
+                             + [np.log(np.absolute(temp_feat) + 1)]
+                             + [build_poly(temp_feat,12)]
+                             )
     #inplace_map(np.nan_to_num, stacked_feat)
 
     print("standardize")
@@ -32,3 +37,15 @@ def add_pairwise_products(x):
         np.column_stack([x[:,i] * x[:,j] 
         for i in range(0,x.shape[1]) 
         for j in range(0,x.shape[1]) if i < j])))
+
+def build_poly(x, degree):
+    N = x.shape[0]
+    # first let's create the X matrix, full of one, with the right dimensions
+    X = np.ones((N,1))
+
+    # Then we loop from 1 to d+1 (skip the first column but go up to d degree)
+    for i in range(1, degree+1):
+        print("poly : " + str(i))
+        add = x**i
+        X = np.concatenate((X,add),axis=1)
+    return X

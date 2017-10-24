@@ -19,39 +19,47 @@ def launch_model_function(y, x, model_function, initial_w=[], max_iters=10, gamm
     else:
         print("no function")
         return [0,0]
-        
-def cross_validation(y, x, indices, fold, model_function, initial_w=[], max_iters=10, gamma=1, lambda_=1):
-    """cross validation"""
-    x_test = x[indices[fold]]
-    y_test = y[indices[fold]]
-    x_train = np.delete(x, indices[fold], axis=0)
-    y_train = np.delete(y, indices[fold], axis=0)
 
-    weights, training_loss = launch_model_function(y_train, x_train, model_function, initial_w, max_iters, gamma, lambda_)
+def cross_validation(y, x, k_indices, k_fold, k, model_function, initial_w=[], max_iters=10, gamma=1, lambda_=1):
+    """return the loss of ridge regression."""
 
-    test_loss = calculate_mae(y_test, x_test, weights)
+    x_te = x[k_indices[k]]
+    y_te = y[k_indices[k]]
+    x_tr = np.delete(x, k_indices[k], axis=0)
+    y_tr = np.delete(y, k_indices[k], axis=0)
+    
+    # Find the estimates for chosen model
+    w, training_loss = launch_model_function(y_tr, x_tr, model_function, initial_w, max_iters, gamma, lambda_)
 
-    y_prediction = np.dot(x_test, weights)
+    # Compute the loss of the train and test data
+    loss_tr = calculate_rmse(y_tr, x_tr, w)
+    loss_te = calculate_rmse(y_te, x_te, w)
+
+    y_prediction = np.dot(x_te, w)
     y_prediction[np.where(y_prediction >= 0)] = 1
     y_prediction[np.where(y_prediction < 0)] = -1
 
-    score = 1 - np.count_nonzero(y_test - y_prediction) / len(y_test)
-    return test_loss, score
+    score = 1 - np.count_nonzero(y_te - y_prediction) / len(y_te)
 
-def k_fold_cross_validation(y, x, k, model_function, initial_w=[], max_iters=10, gamma=1, lambda_=1):
+    return loss_tr, loss_te, score
+
+def k_fold_cross_validation(y, x, k_fold, model_function, initial_w=[], max_iters=10, gamma=1, lambda_=1):
     """k fold cross validation"""
     num_row = y.shape[0]
-    interval = int(num_row / k)
+    interval = int(num_row / k_fold)
     np.random.seed(666)
     indices = np.random.permutation(num_row)
-    k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k)]
+    k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k_fold)]
 
-    total_loss, total_score = 0,0
-    for fold in range(k):
-        loss, score = cross_validation(y,x,k_indices,fold, model_function, initial_w, max_iters, gamma, lambda_)
-        total_loss += loss
+    total_loss_tr, total_loss_te, total_score = 0,0,0
+    for fold in range(k_fold):
+        print("fold : " + str(fold))
+        loss_tr, loss_te, score = cross_validation(y, x, k_indices, k_fold, fold, model_function, initial_w, max_iters, gamma, lambda_)
+        total_loss_tr += loss_tr
+        total_loss_te += loss_te
         total_score += score
-    total_loss = total_loss/k
-    total_score = total_score/k 
+    total_loss_tr = total_loss_tr/k_fold
+    total_loss_te = total_loss_te/k_fold
+    total_score = total_score/k_fold
 
-    return total_loss, total_score
+    return total_loss_tr, total_loss_te, total_score
