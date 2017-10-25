@@ -19,9 +19,22 @@ if __name__ == "__main__":
     #loss,score = k_fold_cross_validation(trainY, trainX, 2, CHOSEN_MODEL)
 
     train_processed_x = featuring(trainX)
-	test_procedded_x = featuring(testX)
+    test_procedded_x = featuring(testX)
 
-	weight, loss = least_squares(trainY, train_processed_x)
-	y_pred = predict_labels(weight, test_procedded_x)
+    lambdas = np.logspace(-4, 0, 10)
+    rmse_tr_list = []
+    rmse_te_list = []
+    for l in lambdas:
+        rmse_tr, rmse_te, score = k_fold_cross_validation(train_y,
+                                                          train_processed_x,
+                                                          4,
+                                                          Model.RIGDE_REGRESSION,
+                                                          lambda_ = l)
+        rmse_tr_list.append(rmse_tr)
+        rmse_te_list.append(rmse_te)
+    best_lambda = lambdas[np.argmin(rmse_te_list)]
 
-	create_csv_submission(testIds,y_pred, "sumbmission.csv")
+    weight, loss = launch_model_function(trainY, train_processed_x, CHOSEN_MODEL, lambda_ = best_lambda)
+    y_pred = predict_labels(weight, test_procedded_x)
+
+    create_csv_submission(testIds,y_pred, "sumbmission.csv")

@@ -88,8 +88,6 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
     return w, losses[-1]
 
 
-
-
 ######################## helpers ########################
 def calculate_mse(y, tx, w):
     e = y - tx.dot(w)
@@ -134,26 +132,6 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
-            
-def build_poly(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
-    poly = np.ones((x.shape[0], 1))
-    for i in range(1,degree + 1):
-        xpoly = x**i
-        poly = np.concatenate((poly,xpoly), axis=1)   
-    return poly
-
-def standardize(x, mean_x=None, std_x=None):
-    """Standardize the original data set."""
-    if mean_x is None:
-        mean_x = np.mean(x, axis=0)
-    x = x - mean_x
-    if std_x is None:
-        std_x = np.std(x, axis=0)
-    x[:, std_x>0] = x[:, std_x>0] / std_x[std_x>0] #to avoid division by zero and NaN values 
-    
-    return x, mean_x, std_x
-
 
 def penalized_loss(y, tx, w, lambda_):
     return calculate_loss(y, tx, w) + lambda_ * w.T.dot(w)

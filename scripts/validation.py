@@ -1,6 +1,8 @@
 import numpy as np
 from implementations import *
 from model_enum import *
+from feature_preprocessing import *
+from plots import *
 
 def launch_model_function(y, x, model_function, initial_w=[], max_iters=10, gamma=1, lambda_=1):
     
@@ -63,3 +65,61 @@ def k_fold_cross_validation(y, x, k_fold, model_function, initial_w=[], max_iter
     total_score = total_score/k_fold
 
     return total_loss_tr, total_loss_te, total_score
+
+def bias_variance_demo(y, x, d, model_function, initial_w=[], max_iters=0, gamma=1, lambda_=1, ratio = 0.005):
+    
+    # define parameters
+    seeds = range(5)
+    num_data = 10000
+    ratio_train = ratio
+    degrees = range(1, d+1)
+    
+    # define list to store the variable
+    rmse_tr = np.empty((len(seeds), len(degrees)))
+    rmse_te = np.empty((len(seeds), len(degrees)))
+    
+    for index_seed, seed in enumerate(seeds):
+        print("seed number : {}".format(index_seed))
+        np.random.seed(seed)
+        
+        x_tr, x_te, y_tr, y_te = split_data(x, y, ratio_train, seed)
+
+        # Loop through the different degrees for the polynomial and find the error
+        for index_degree, degree in enumerate(degrees):
+            print("degree {}".format(degree))
+            # form polynomial data
+            X_tr = build_log_comb_poly(x_tr, degree)
+            X_te = build_log_comb_poly(x_te, degree)
+            # least square
+            w, training_loss = launch_model_function(y_tr, X_tr, model_function, initial_w, max_iters, gamma, lambda_)
+            # calculate the rmse for train and test
+            rmse_tr[index_seed, index_degree] = calculate_rmse(y_tr, X_tr, w)
+            print("rmse_tr : {}".format(calculate_rmse(y_tr, X_tr, w)))
+            rmse_te[index_seed, index_degree] = calculate_rmse(y_te, X_te, w)
+            print("rmse_te : {}".format(calculate_rmse(y_te, X_te, w)))
+
+   
+    bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te)
+
+# The idea is to create a random permutation vector of size N.
+# Then we compute the ratio by taking N*ratio
+# And then we index Y and X with our permutation vector
+def split_data(x, y, ratio, seed=1):
+   
+    # set seed
+    np.random.seed(seed)
+    
+    N = len(y)
+    random_ind = np.random.permutation(N)
+    split_ind = int(np.floor(ratio * N))
+    training_ind = random_ind[:split_ind]
+    testing_ind = random_ind[split_ind:]
+    
+    # We split X and Y unsing our new indices
+    training_x = x[training_ind]
+    training_y = y[training_ind]
+    
+    testing_x = x[testing_ind]
+    testing_y = y[testing_ind]
+    
+    return training_x, testing_x, training_y, testing_y
