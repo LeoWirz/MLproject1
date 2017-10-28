@@ -56,12 +56,26 @@ def ridge_regression(y, tx, lambda_):
 
     return w, loss
 
-def logistic_regression(y, tx, w):
-    """return the loss, gradient, and hessian."""
-    loss = calculate_loss(y, tx, w)
-    gradient = calculate_gradient(y, tx, w)
-    hessian = calculate_hessian(y, tx, w)
-    return loss, gradient, hessian
+def logistic_regression(y, tx, initial_w, max_iters, gamma, newton=False):
+    """
+        Logistic regression, uses gradient descent, can use Newton's method (using hessien computation)
+        in order to converge in fewer step, but much slower.
+        Return the loss and updated w.
+    """
+    OBJECTIVE_DECREASE_THRESHOLD = 1e-6
+    losses = []
+    
+    w = initial_w
+    for i in range(max_iters):
+        loss, w = learning_by_gradient_descent(y, tx, w, gamma)
+    
+        if i%100 == 0:
+            print("Current iteration = {i}, loss before it = {l}".format(i=i, l=loss))
+
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < OBJECTIVE_DECREASE_THRESHOLD:
+            break
+    return w, losses[-1]
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
     # init parameters
@@ -180,7 +194,8 @@ def learning_by_gradient_descent(y, tx, w, gamma):
 
 def calculate_hessian(y, tx, w):
     """return the hessian of the loss function."""
-    pred = sigmoid(tx.dot(w))
+    pred = sigmoid(tx.dot(w)).reshape((-1,1))
+    print(pred.shape)
     pred = np.diag(pred.T[0])
     r = np.multiply(pred, (1-pred))
     return tx.T.dot(r).dot(tx)

@@ -53,17 +53,18 @@ def k_fold_cross_validation(y, x, k_fold, model_function, initial_w=[], max_iter
     indices = np.random.permutation(num_row)
     k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k_fold)]
 
-    total_loss_tr, total_loss_te, total_score = 0,0,0
+    total_loss_tr, total_loss_te, total_score = [],[],[]
     for fold in range(k_fold):
-        print("fold : " + str(fold))
+        #print("fold : " + str(fold))
         loss_tr, loss_te, score = cross_validation(y, x, k_indices, k_fold, fold, model_function, initial_w, max_iters, gamma, lambda_)
-        total_loss_tr += loss_tr
-        total_loss_te += loss_te
-        total_score += score
-    total_loss_tr = total_loss_tr/k_fold
-    total_loss_te = total_loss_te/k_fold
-    total_score = total_score/k_fold
+        total_loss_tr.append(loss_tr)
+        total_loss_te.append(loss_te)
+        total_score.append(score)
+    #total_loss_tr = total_loss_tr/k_fold
+    #total_loss_te = total_loss_te/k_fold
+    #total_score = total_score/k_fold
 
+    #return [np.mean(total_loss_tr), np.std(total_loss_tr)],[np.mean(total_loss_te), np.std(total_loss_te)],[np.mean(total_score), np.std(total_score)]
     return total_loss_tr, total_loss_te, total_score
 
 def bias_variance_demo(y, x, d, model_function, initial_w=[], max_iters=0, gamma=1, lambda_=1, ratio = 0.005):
@@ -79,7 +80,7 @@ def bias_variance_demo(y, x, d, model_function, initial_w=[], max_iters=0, gamma
     rmse_te = np.empty((len(seeds), len(degrees)))
     
     for index_seed, seed in enumerate(seeds):
-        print("seed number : {}".format(index_seed))
+        #print("seed number : {}".format(index_seed))
         np.random.seed(seed)
         
         x_tr, x_te, y_tr, y_te = split_data(x, y, ratio_train, seed)
@@ -94,12 +95,9 @@ def bias_variance_demo(y, x, d, model_function, initial_w=[], max_iters=0, gamma
             w, training_loss = launch_model_function(y_tr, X_tr, model_function, initial_w, max_iters, gamma, lambda_)
             # calculate the rmse for train and test
             rmse_tr[index_seed, index_degree] = calculate_rmse(y_tr, X_tr, w)
-            print("rmse_tr : {}".format(calculate_rmse(y_tr, X_tr, w)))
             rmse_te[index_seed, index_degree] = calculate_rmse(y_te, X_te, w)
-            print("rmse_te : {}".format(calculate_rmse(y_te, X_te, w)))
 
-   
-    bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te)
+    bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te, d, lambda_)
 
 # The idea is to create a random permutation vector of size N.
 # Then we compute the ratio by taking N*ratio

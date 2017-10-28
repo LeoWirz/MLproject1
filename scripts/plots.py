@@ -16,7 +16,7 @@ def cross_validation_visualization(lambds, mse_tr, mse_te):
     plt.show()
 
 
-def bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te):
+def bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te, d, lambda_):
     """visualize the bias variance decomposition."""
     rmse_tr_mean = np.expand_dims(np.mean(rmse_tr, axis=0), axis=0)
     rmse_te_mean = np.expand_dims(np.mean(rmse_te, axis=0), axis=0)
@@ -50,9 +50,9 @@ def bias_variance_decomposition_visualization(degrees, rmse_tr, rmse_te):
         linestyle="-",
         label='test',
         linewidth=3)
-    plt.ylim(0.2, 0.7)
+    #plt.ylim(0.2, 0.7)
     plt.xlabel("degree")
     plt.ylabel("error")
     plt.title("Bias-Variance Decomposition")
-    plt.savefig("bias_variance")
+    plt.savefig("bias_variance_deg{}_lam{}.png".format(d,lambda_))
     plt.show()

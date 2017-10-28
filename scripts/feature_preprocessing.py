@@ -1,9 +1,10 @@
 import numpy as np
 from implementations import *
 
-def featuring(features):
+def featuring(features, fun=[True,True,True,True,True,True,True]):
     # replace -999 by nan
     temp_feat = np.copy(features)
+    #temp_feat = standardize(temp_feat)[0]
         
     print("replacing -999 with median")
     for x in temp_feat:
@@ -13,24 +14,43 @@ def featuring(features):
         x[where_are_NaNs] = median
         
     print("applying function")
-    stacked_feat = np.hstack( np.ones((temp_feat.shape[0], 1))
-                             + [temp_feat] 
-                             #+ [np.power(temp_feat,2)] 
-                             + [np.absolute(temp_feat)**0.5]
-                             + [np.arctan(temp_feat)]
-                             #+ [add_pairwise_products(temp_feat)]
-                             + [np.log(np.absolute(temp_feat) + 1)]
-                             + [build_comb_poly(temp_feat,3)]
+
+    ones = np.ones(temp_feat.shape[0]).reshape((-1,1))    
+
+    f1,f2,f3,f4,f5,f6,f7 = [],[],[],[],[],[],[]
+
+    #f1 = [np.power(temp_feat,2)] 
+    f2 = [np.absolute(temp_feat)**0.5]
+    f3 = [np.arctan(temp_feat)]
+    #f4 = [add_pairwise_products(temp_feat)]
+    f5 = [np.log(np.absolute(temp_feat) + 1)]
+    f6 = [log_with_neg(temp_feat)]
+    f7 = [build_comb_poly(temp_feat,2)]
+
+
+    stacked_feat = np.hstack( [ones] + [temp_feat] 
+                             + f1
+                             + f2
+                             + f3
+                             + f4
+                             + f5
+                             + f6
+                             + f7
                              )
-    #inplace_map(np.nan_to_num, stacked_feat)
 
-    print("standardize")
+    #stacked_feat = (standardize(stacked_feat)[0])
+    inplace_map(np.nan_to_num, stacked_feat)
+    return stacked_feat
 
-    # add row of 1s
-    np.hstack(np.ones((temp_feat.shape[0], 1)), temp_feat)
-
-    return standardize(stacked_feat)[0]
+def log_with_neg(x):
+    sign = np.sign(x)
+    x = np.log(np.absolute(x)+1)
+    x = np.multiply(x,sign)
+    return x
     
+
+def remove_zeros_col(x):
+    return x[:,np.any(x != 0, axis=0)]
 
 def inplace_map(f, x):
     for i, v in enumerate(x):
