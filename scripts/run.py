@@ -9,7 +9,7 @@ from feature_preprocessing import *
 
 TRAIN_FILE = '../data/train.csv'
 TEST_FILE = '../data/test.csv'
-CHOSEN_MODEL = Model.LEAST_SQUARES
+CHOSEN_MODEL = Model.RIGDE_REGRESSION
 ONLY_SAMPLE = True
 
 if __name__ == "__main__":

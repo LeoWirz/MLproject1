@@ -7,11 +7,11 @@ def featuring(features, fun=[True,True,True,True,True,True,True]):
     #temp_feat = standardize(temp_feat)[0]
         
     print("replacing -999 with median")
-    for x in temp_feat:
-        np.place(x, x == -999, np.nan)
-        median = np.nanmedian(x, axis=0)    
-        where_are_NaNs = np.isnan(x)
-        x[where_are_NaNs] = median
+    #for x in temp_feat:
+    #    np.place(x, x == -999, np.nan)
+    #    median = np.nanmedian(x, axis=0)    
+    #    where_are_NaNs = np.isnan(x)
+    #    x[where_are_NaNs] = median
         
     print("applying function")
 
@@ -23,9 +23,9 @@ def featuring(features, fun=[True,True,True,True,True,True,True]):
     f2 = [np.absolute(temp_feat)**0.5]
     f3 = [np.arctan(temp_feat)]
     #f4 = [add_pairwise_products(temp_feat)]
-    f5 = [np.log(np.absolute(temp_feat) + 1)]
+    #f5 = [np.log(np.absolute(temp_feat) + 1)]
     f6 = [log_with_neg(temp_feat)]
-    f7 = [build_comb_poly(temp_feat,2)]
+    f7 = [build_comb_poly(temp_feat,4)]
 
 
     stacked_feat = np.hstack( [ones] + [temp_feat] 
