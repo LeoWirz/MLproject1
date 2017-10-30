@@ -25,14 +25,14 @@ models_test = split_by_label(Xtest, ytest, idstest, [0,1,2,3], 22)
 # Clean the 4 models
 for m in models:
     m[0] = clean(m[0])
-    
+
 for m in models_test:
     m[0] = clean(m[0])
 
 # Standardize the matrix of experience
 for m in models:
     m[0] = standardize_m(m[0])
-    
+
 for m in models_test:
     m[0] = standardize_m(m[0])
 
@@ -40,25 +40,28 @@ for m in models_test:
 print("Compute logistic")
 lambda_ = 0.0000001
 iterations = 10000
-degree = 1
+# We use degree 2 polynomial for models with label 0 and 1
+# and degree 3 polynomial for models with label 2 and 3
+degrees = [2,2,3,3]
 
-W, losses = magic(models, iterations, lambda_, degree)
+
+W, losses = magic(models, iterations, lambda_, degrees)
 
 # Create test model of right size
 print("Prepare the test data")
 for ind, m in enumerate(models_test):
-    
+
     if ind is 0:
-        m[0] = build_comb_poly_log_sqrt_m(m[0], degree) 
-        
+        m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
     if ind is 1:
-        m[0] = build_comb_poly_log_sqrt_m(m[0], degree)
-        
+        m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
     if ind is 2:
-        m[0] = build_comb_poly_log_sqrt_m(m[0], degree) 
-        
+        m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
     if ind is 3:
-        m[0] = build_comb_poly_log_sqrt_m(m[0], degree)
+        m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
 
 # ----------------- Create the predictions ----------------------------
 
