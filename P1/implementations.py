@@ -14,6 +14,7 @@ def magic(models, iterations, lambda_, degrees):
 
         if ind is 0:
             print("------------ LABEL 0 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
             m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
 
             # Initialize weights for the logistic regression
@@ -26,6 +27,7 @@ def magic(models, iterations, lambda_, degrees):
 
         if ind is 1:
             print("------------ LABEL 1 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
             m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
 
             # Initialize weights for the logistic regression
@@ -38,6 +40,7 @@ def magic(models, iterations, lambda_, degrees):
 
         if ind is 2:
             print("------------ LABEL 2 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
             m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
 
             # Initialize weights for the logistic regression
@@ -50,6 +53,7 @@ def magic(models, iterations, lambda_, degrees):
 
         if ind is 3:
             print("------------ LABEL 3 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
             m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
 
             # Initialize weights for the logistic regression
@@ -270,7 +274,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
         w = w - gamma * grad
 
         # log info
-        if iter % 10 == 0:
+        if iter % 100 == 0:
             print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
 
         # converge criteria

@@ -1,6 +1,9 @@
 import numpy as np
 from proj1_helpers import *
 from implementations import *
+from time import time
+
+now = time()
 
 # ---------- Import the data ---------------
 
@@ -85,3 +88,8 @@ pred = pred[np.argsort(pred[:, 0])]
 # Create submission file
 print("Create submission file")
 create_csv_submission(pred[:,0], pred[:,1], "predictions.csv")
+
+done = time()
+duration = (done-now) / 60 # in minutes
+
+print("Time to do the magic stuff : {} minutes".format(duration))
