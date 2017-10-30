@@ -16,7 +16,16 @@ y, X, ids = load_csv_data(DATA_TRAIN_PATH)
 ytest, Xtest, idstest = load_csv_data(DATA_TEST_PATH)
 
 # Convert labels in order to use the logistic regression
+print("Change -1 to 0 for Y and clip outliers to 1000")
 y[y==-1] = 0
+# Clip outliers
+X[np.where(X[:,3] >= 1000)].clip(min=None, max=1000)
+X[np.where(X[:,8] >= 1000)].clip(min=None, max=1000)
+X[np.where(X[:,19] >= 1000)].clip(min=None, max=1000)
+
+Xtest[np.where(Xtest[:,3] >= 1000)].clip(min=None, max=1000)
+Xtest[np.where(Xtest[:,8] >= 1000)].clip(min=None, max=1000)
+Xtest[np.where(Xtest[:,19] >= 1000)].clip(min=None, max=1000)
 
 # ----------- Clean the Data ---------------
 print("Clean the data")
@@ -41,14 +50,16 @@ for m in models_test:
 
 # ------------ Compute the weights and prepare the testing data --------------
 print("Compute logistic")
-lambda_ = 0.0000001
+gamma = 0.0000001
 iterations = 10000
+
+print("Gamma = {}".format(gamma))
 # We use degree 2 polynomial for models with label 0 and 1
 # and degree 3 polynomial for models with label 2 and 3
 degrees = [2,2,3,3]
 
 
-W, losses = magic(models, iterations, lambda_, degrees)
+W, losses = compute_weights(models, iterations, gamma, degrees)
 
 # Create test model of right size
 print("Prepare the test data")

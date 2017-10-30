@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-def magic(models, iterations, lambda_, degrees):
+def compute_weights(models, iterations, gamma_, degrees):
     """
         This function creates for each of the 4 models the polynomial matrix X,
         with the cross therm, logarithm and square root.
@@ -22,7 +22,7 @@ def magic(models, iterations, lambda_, degrees):
 
             #Run logistic regression with 500 iteration
             print("running logistic regression for model label 0")
-            lossF0, w  = logistic_regression(m[1], m[0], w_init, iterations, lambda_)
+            lossF0, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
             W.append(w)
 
         if ind is 1:
@@ -35,7 +35,7 @@ def magic(models, iterations, lambda_, degrees):
 
             #Run logistic regression with 500 iteration
             print("running logistic regression for model label 1")
-            lossF1, w  = logistic_regression(m[1], m[0], w_init, iterations, lambda_)
+            lossF1, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
             W.append(w)
 
         if ind is 2:
@@ -48,7 +48,7 @@ def magic(models, iterations, lambda_, degrees):
 
             #Run logistic regression with 500 iteration
             print("running logistic regression for model label 2")
-            lossF2, w  = logistic_regression(m[1], m[0], w_init, iterations, lambda_)
+            lossF2, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
             W.append(w)
 
         if ind is 3:
@@ -61,7 +61,7 @@ def magic(models, iterations, lambda_, degrees):
 
             #Run logistic regression with 500 iteration
             print("running logistic regression for model label 3")
-            lossF3, w  = logistic_regression(m[1], m[0], w_init, iterations, lambda_)
+            lossF3, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
             W.append(w)
 
     losses = [lossF0, lossF1, lossF2, lossF3]
@@ -157,19 +157,14 @@ def standardize_m(data):
 
     return S
 
-def build_poly_m(x, degree):
 
-
-    N = x.shape[0]
-    # first let's create the X matrix, full of one, with the right dimensions
-    X = np.ones((N,1))
-    # Then we loop from 1 to d+1 (skip the first column but go up to d degree)
-
-    for i in range(1, degree+1):
-        add = x**i
-        X = np.concatenate((X,add),axis=1)
-
-    return X
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    poly = np.ones((x.shape[0], 1))
+    for i in range(1,degree + 1):
+        xpoly = x**i
+        poly = np.concatenate((poly,xpoly), axis=1)
+    return poly
 
 # Adds the cross term x1x2 x1x3 ... x1xD ... x2x3 ... x2xD x3x4 ... ... xD-1xD
 def build_comb_poly_log_sqrt_m(x, d):
@@ -358,45 +353,6 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
-
-def build_poly(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
-    poly = np.ones((x.shape[0], 1))
-    for i in range(1,degree + 1):
-        xpoly = x**i
-        poly = np.concatenate((poly,xpoly), axis=1)
-    return poly
-
-# Create the combinaisons of polygons (x1x1, x1x2, x1x3, x2x2, x2x3, etc)
-def build_poly_combinations(x):
-    indices = []
-
-    # Create indices
-    for i in range (len(x[0])):
-        for t in range (i,len(x[0])):
-            indices.append([t, i])
-    indices = np.array(indices).T
-
-    n = x.shape[1]
-    number_of_rows = indices.shape[1] + n
-
-    poly_x = np.zeros((len(x), number_of_rows))
-    poly_x[:, :n] = x
-    poly_x[:,n:n + indices.shape[1]] = x[:, indices[0]] * x[:, indices[1]]
-
-    return poly_x
-
-
-def standardize(x, mean_x=None, std_x=None):
-    """Standardize the original data set."""
-    if mean_x is None:
-        mean_x = np.mean(x, axis=0)
-    x = x - mean_x
-    if std_x is None:
-        std_x = np.std(x, axis=0)
-    x[:, std_x>0] = x[:, std_x>0] / std_x[std_x>0] #to avoid division by zero and NaN values
-
-    return x, mean_x, std_x
 
 
 def penalized_loss(y, tx, w, lambda_):
