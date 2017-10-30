@@ -1,6 +1,200 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+def compute_weights(models, iterations, gamma_, degrees):
+    """
+        This function creates for each of the 4 models the polynomial matrix X,
+        with the cross therm, logarithm and square root.
+
+        It then compute the weights for each models using the logistic regression
+    """
+
+    W = []
+    for ind, m in enumerate(models):
+
+        if ind is 0:
+            print("------------ LABEL 0 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
+            m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
+            # Initialize weights for the logistic regression
+            w_init = np.zeros(m[0].shape[1])
+
+            #Run logistic regression with 500 iteration
+            print("running logistic regression for model label 0")
+            lossF0, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
+            W.append(w)
+
+        if ind is 1:
+            print("------------ LABEL 1 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
+            m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
+            # Initialize weights for the logistic regression
+            w_init = np.zeros(m[0].shape[1])
+
+            #Run logistic regression with 500 iteration
+            print("running logistic regression for model label 1")
+            lossF1, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
+            W.append(w)
+
+        if ind is 2:
+            print("------------ LABEL 2 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
+            m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
+            # Initialize weights for the logistic regression
+            w_init = np.zeros(m[0].shape[1])
+
+            #Run logistic regression with 500 iteration
+            print("running logistic regression for model label 2")
+            lossF2, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
+            W.append(w)
+
+        if ind is 3:
+            print("------------ LABEL 3 ---------------")
+            print("Degree used : {}".format(degrees[ind]))
+            m[0] = build_comb_poly_log_sqrt_m(m[0], degrees[ind])
+
+            # Initialize weights for the logistic regression
+            w_init = np.zeros(m[0].shape[1])
+
+            #Run logistic regression with 500 iteration
+            print("running logistic regression for model label 3")
+            lossF3, w  = logistic_regression(m[1], m[0], w_init, iterations, gamma_)
+            W.append(w)
+
+    losses = [lossF0, lossF1, lossF2, lossF3]
+
+    return W, losses
+
+# ----------------- DATA CLEANING ------------------------
+
+def clean(X):
+    """This function replace the -999 in the first column by the median of the column.
+    It also remove a column if there are only -999 or 0 values
+
+    """
+
+    # 1: clean the first column, put the median instead of
+    median = np.median(X[ X[:,0] != -999,0])
+    np.place(X[:,0], X[:,0] == -999, median)
+
+    # 2: delete columns with only -999 values and 0 values
+    D = X.shape[1]
+    N = X.shape[0]
+    ind = []
+
+    for i in range(D):
+        n999 = len(X[ X[:,i] == -999, i])
+        n0 = len(X[ X[:,i] == 0, i])
+        if (n999 == N) or (n0 == N):
+            ind.append(i)
+
+    X = np.delete(X, ind, 1)
+
+
+    return X
+
+def findIndLabel(A, label, column):
+    """
+    Given a matrix, this function will return a vector of indiced where the given column in
+    the matrix is equal to the given label
+    """
+    N = A.shape[0]
+    ind = []
+
+    for i in range(N):
+        if A[i,column] == label:
+            ind.append(i)
+
+    return ind
+
+def split_by_label(X, y, ids, labels, column):
+    """
+    This function splits the dataset X, the observation Y and the ids with respect
+    to the labels present in a given column
+
+    It returns an array of models,
+    where models[0] is the first model,
+    models[0][0] is the X matrix of the first model
+    models[0][1] is the Y vector of the first model
+    models[0][2] is the IDS vector of the first model
+    """
+
+    m0 = [ None, None, None]
+    m1 = [ None, None, None]
+    m2 = [ None, None, None]
+    m3 = [ None, None, None]
+
+    models = [m0, m1, m2, m3]
+
+    # split the models
+    for (ind_lab, l) in enumerate(labels):
+
+        ind = findIndLabel(X, l, column)
+
+        models[ind_lab][0] = X[ind]
+        models[ind_lab][1] = y[ind]
+        models[ind_lab][2] = ids[ind]
+
+    # Remove the column with the label
+    for m in models:
+        m[0] = np.delete(m[0], column, 1)
+
+
+    return models
+
+def standardize_m(data):
+    # mean by features (columns)
+    means_features = np.mean(data, axis=0) # axis=0 apply by column
+    # substract the mean to each features
+    S = data - means_features
+    # standard deviation by features (column)
+    std_features = np.std(S, axis=0)
+    # divide by the std of each features
+    S = S / std_features
+
+    return S
+
+
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    poly = np.ones((x.shape[0], 1))
+    for i in range(1,degree + 1):
+        xpoly = x**i
+        poly = np.concatenate((poly,xpoly), axis=1)
+    return poly
+
+# Adds the cross term x1x2 x1x3 ... x1xD ... x2x3 ... x2xD x3x4 ... ... xD-1xD
+def build_comb_poly_log_sqrt_m(x, d):
+
+    D = x.shape[1]
+    # first we create the matrix with the polynomial
+    X = build_poly(x, d)
+
+    # Then we add to this matric the cross term of the original matrix
+    # of experience x
+    for i in range(D):
+        for j in range(i,D):
+            if i is j:
+                pass
+            else:
+                add = x[:,i] * x[:,j]
+                d_ = X.shape[1]
+                X = np.insert(X, d_, add,1)
+
+    add1 = np.log(np.absolute(x) + 1)
+    X = np.concatenate((X,add1),1)
+
+    add2 = np.sqrt(np.absolute(x))
+    X = np.concatenate((X,add1),1)
+
+    return X
+
+
+# ------------------- ML FUNCTIONS ------------------------------
+
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     ws = [initial_w]
     losses = []
@@ -30,10 +224,10 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
 
             ws.append(np.copy(w))
             losses.append(loss)
-            
+
         print("SGD({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
               bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
-        
+
     return ws[-1], losses[-1]
 
 def least_squares(y, tx):
@@ -43,47 +237,55 @@ def least_squares(y, tx):
     return w, loss
 
 def ridge_regression(y, tx, lambda_):
-    """ridge regression"""
-    N = tx.shape[0]
-    D = tx.shape[1]
-    
-    regul = 2*N*lambda_*np.identity(D)
-    left = tx.T.dot(tx) + regul
-    right = tx.T.dot(y)
-    
-    w = np.linalg.solve(left, right)
+    """implement ridge regression."""
+    N = y.shape[0]
+    txTtx = tx.T.dot(tx)
+    w = np.linalg.solve((tx.T).dot(tx) + (lambda_*np.identity(tx.shape[1])),(tx.T).dot(y))
     loss = calculate_mse(y, tx, w)
-
     return w, loss
 
-def logistic_regression(y, tx, initial_w, max_iters, gamma, newton=False):
-    """
-        Logistic regression, uses gradient descent, can use Newton's method (using hessien computation)
-        in order to converge in fewer step, but much slower.
-        Return the loss and updated w.
-    """
-    OBJECTIVE_DECREASE_THRESHOLD = 1e-6
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
+    # init parameters
+    threshold = 1e-8
     losses = []
-    
+
     w = initial_w
-    for i in range(max_iters):
-        loss, w = learning_by_gradient_descent(y, tx, w, gamma)
-    
-        if i%100 == 0:
-            print("Current iteration = {i}, loss before it = {l}".format(i=i, l=loss))
 
+    # start the logistic regression
+    for iter in range(max_iters):
+        # compute the y estimate and map them to the probability range (0,1)
+        # here we use this weird form to avoid memory/numerical issues
+        y_est = tx.dot(w)
+        sigmoid = np.exp(-np.logaddexp(0, -y_est))
+
+        # compute the loss (the weird for is just to avoid memory issues)
+        loss = y*np.log(sigmoid+1e-1)+(1-y)*(np.log(1-sigmoid+0.1))
+        loss = -np.sum(loss)
+
+        # compute the gradient using the sigmoid function
+        grad = tx.T.dot(sigmoid-y)
+
+        # update the weights
+        w = w - gamma * grad
+
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, the loss={l}".format(i=iter, l=loss))
+
+        # converge criteria
         losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < OBJECTIVE_DECREASE_THRESHOLD:
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
-    return w, losses[-1]
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
+    return loss, w
+
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     # init parameters
     threshold = 1e-8
     losses = []
 
     # build tx
-    tx = tx
+    tx = x
     w = initial_w
 
     # start the logistic regression
@@ -98,8 +300,13 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iter, gamma):
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     # visualization
-    print("The loss={l}".format(l=penalized_loss(y, tx, w, lambda_)))
-    return w, losses[-1]
+    print("The loss={l}".format(l=penalized_loss(y, tx, w)))
+    return losses[-1], w
+
+    return w, loss
+
+
+
 
 
 ######################## helpers ########################
@@ -108,7 +315,7 @@ def calculate_mse(y, tx, w):
     return 1/2*np.mean(e**2)
 
 def calculate_rmse(y, tx, w):
-    return np.sqrt(2*calculate_mse(y, tx, w))
+    return np.sqrt(2*compute_mse(y, tx, w))
 
 def calculate_mae(y, tx, w):
     e = y - tx.dot(w)
@@ -147,55 +354,16 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
 
+
 def penalized_loss(y, tx, w, lambda_):
     return calculate_loss(y, tx, w) + lambda_ * w.T.dot(w)
 
 def penalized_logistic_regression(y, tx, w, lambda_):
-    """return the loss and gradient."""
-    num_samples = y.shape[0]
-    loss = calculate_loss(y, tx, w) + lambda_ * np.squeeze(w.T.dot(w))
-    gradient = calculate_gradient(y, tx, w) + 2 * lambda_ * w
-    return loss, gradient
+    loss = penalized_loss(y, tx, w, lambda_)
+    grad = calculate_gradient(y, tx, w) + lambda_ * 2 * w
+    return loss, grad
 
 def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
-    """
-    Do one step of gradient descent, using the penalized logistic regression.
-    Return the loss and updated w.
-    """
-    loss, gradient = penalized_logistic_regression(y, tx, w, lambda_)
-    w -= gamma * gradient
+    loss, grad = penalized_logistic_regression(y, tx, w, lambda_)
+    w = w - gamma*grad
     return loss, w
-
-def sigmoid(t):
-    """apply sigmoid function on t."""
-    return 1.0 / (1 + np.exp(-t))
-
-def calculate_loss(y, tx, w):
-    """compute the cost by negative log likelihood."""
-    pred = sigmoid(tx.dot(w))
-    loss = y.T.dot(np.log(pred)) + (1 - y).T.dot(np.log(1 - pred))
-    return np.squeeze(- loss)
-
-def calculate_gradient(y, tx, w):
-    """compute the gradient of loss."""
-    pred = sigmoid(tx.dot(w))
-    grad = tx.T.dot(pred - y)
-    return grad
-
-def learning_by_gradient_descent(y, tx, w, gamma):
-    """
-    Do one step of gradient descen using logistic regression.
-    Return the loss and the updated w.
-    """
-    loss = calculate_loss(y, tx, w)
-    grad = calculate_gradient(y, tx, w)
-    w -= gamma * grad
-    return loss, w
-
-def calculate_hessian(y, tx, w):
-    """return the hessian of the loss function."""
-    pred = sigmoid(tx.dot(w)).reshape((-1,1))
-    print(pred.shape)
-    pred = np.diag(pred.T[0])
-    r = np.multiply(pred, (1-pred))
-    return tx.T.dot(r).dot(tx)
